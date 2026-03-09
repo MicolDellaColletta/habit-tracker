@@ -1,5 +1,4 @@
-printf "flask\nwerkzeug\ngunicorn\n" > ~/habit_tracker/requirements.txt
 flask
 werkzeug
 gunicorn
-EOF
+psycopg2-binary
