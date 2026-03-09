@@ -6,7 +6,8 @@ from datetime import date, timedelta
 from functools import wraps
 
 app = Flask(__name__)
-app.secret_key = "your-secret-key-change-this"
+import os
+app.secret_key = os.environ.get("SECRET_KEY", "fallback-secret-key")
 
 def login_required(f):
     @wraps(f)
