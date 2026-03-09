@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Habit Tracker 🌸</title>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Nunito', sans-serif;
+            background: #fff5f9;
+            min-height: 100vh;
+            padding: 40px 20px;
+            color: #4a4a4a;
+        }
+
+        h1 {
+            text-align: center;
+            font-size: 2.2rem;
+            font-weight: 800;
+            color: #e87ea1;
+            margin-bottom: 8px;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #c9a0b4;
+            margin-bottom: 40px;
+            font-size: 0.95rem;
+        }
+
+        .container {
+            max-width: 720px;
+            margin: 0 auto;
+        }
+
+        /* Add habit form */
+        .add-form {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 36px;
+        }
+
+        .add-form input {
+            flex: 1;
+            padding: 12px 18px;
+            border: 2px solid #f5c6d8;
+            border-radius: 50px;
+            font-family: 'Nunito', sans-serif;
+            font-size: 0.95rem;
+            outline: none;
+            background: white;
+            color: #4a4a4a;
+            transition: border 0.2s;
+        }
+
+        .add-form input:focus {
+            border-color: #e87ea1;
+        }
+
+        .add-form button {
+            padding: 12px 24px;
+            background: #e87ea1;
+            color: white;
+            border: none;
+            border-radius: 50px;
+            font-family: 'Nunito', sans-serif;
+            font-weight: 700;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: background 0.2s, transform 0.1s;
+        }
+
+        .add-form button:hover {
+            background: #d96990;
+            transform: scale(1.03);
+        }
+
+        /* Habit card */
+        .habit-card {
+            background: white;
+            border-radius: 20px;
+            padding: 24px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 16px rgba(232, 126, 161, 0.1);
+            transition: transform 0.2s;
+        }
+
+        .habit-card:hover {
+            transform: translateY(-2px);
+        }
+
+        .habit-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 16px;
+        }
+
+        .habit-left {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .check-btn {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            border: 2.5px solid #f5c6d8;
+            background: white;
+            cursor: pointer;
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            flex-shrink: 0;
+        }
+
+        .check-btn.done {
+            background: #e87ea1;
+            border-color: #e87ea1;
+            color: white;
+        }
+
+        .check-btn:hover {
+            transform: scale(1.1);
+        }
+
+        .habit-name {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #3d3d3d;
+        }
+
+        .delete-btn {
+            background: none;
+            border: none;
+            color: #dbb0c0;
+            cursor: pointer;
+            font-size: 1rem;
+            padding: 4px 8px;
+            border-radius: 8px;
+            transition: color 0.2s;
+        }
+
+        .delete-btn:hover {
+            color: #e87ea1;
+        }
+
+        /* Stats row */
+        .stats-row {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .stat-pill {
+            background: #fff0f5;
+            border-radius: 50px;
+            padding: 6px 14px;
+            font-size: 0.82rem;
+            font-weight: 600;
+            color: #c9a0b4; 
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .stat-pill span {
+            color: #e87ea1;
+            font-weight: 800;
+        }
+
+        /* Heatmap */
+        .heatmap {
+            display: flex;
+            gap: 4px;
+            flex-wrap: nowrap;
+            overflow-x: auto;
+            padding-bottom: 4px;
+        }
+
+        .heatmap-cell {
+            width: 22px;
+            height: 22px;
+            border-radius: 6px;
+            flex-shrink: 0;
+            position: relative;
+        }
+
+        .heatmap-cell.done {
+            background: #e87ea1;
+        }
+
+        .heatmap-cell.empty {
+            background: #fce4ed;
+        }
+
+        /* Empty state */
+        .empty-state {
+            text-align: center;
+            color: #c9a0b4;
+            padding: 60px 20px;
+            font-size: 1rem;
+        }
+
+        .empty-state .emoji {
+            font-size: 3rem;
+            margin-bottom: 12px;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+        <h1>🌸 Habit Tracker</h1>
+        <form action="/logout" method="GET">
+            <button style="background: none; border: 2px solid #f5c6d8; color: #e87ea1; font-family: 'Nunito', sans-serif; font-weight: 700; font-size: 0.85rem; padding: 8px 18px; border-radius: 50px; cursor: pointer;">
+                Logout
+            </button>
+        </form>
+    </div>
+    <p class="subtitle">welcome back, {{ username }} 🌷</p>
+        {% if habits %}
+            {% for habit in habits %}
+            <div class="habit-card">
+                <div class="habit-header">
+                    <div class="habit-left">
+                        <form action="/toggle/{{ habit.id }}" method="POST">
+                            <button type="submit" class="check-btn {{ 'done' if habit.done_today else '' }}">
+                                {{ '✓' if habit.done_today else '' }}
+                            </button>
+                        </form>
+                        <span class="habit-name">{{ habit.name }}</span>
+                    </div>
+                    <form action="/delete/{{ habit.id }}" method="POST" onsubmit="return confirm('Delete {{ habit.name }}?')">
+                        <button type="submit" class="delete-btn">✕</button>
+                    </form>
+                </div>
+
+                <div class="stats-row">
+                    <div class="stat-pill">🔥 Streak <span>{{ habit.streak }}</span></div>
+                    <div class="stat-pill">✅ Total <span>{{ habit.total }}</span></div>
+                    <div class="stat-pill">📅 This week <span>{{ habit.weekly_percentage }}%</span></div>
+                </div>
+
+                <div class="heatmap">
+                    {% for cell in habit.heatmap %}
+                    <div class="heatmap-cell {{ 'done' if cell.done else 'empty' }}" title="{{ cell.date }}"></div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="empty-state">
+                <div class="emoji">🌱</div>
+                <p>No habits yet. Add one above to get started!</p>
+            </div>
+        {% endif %}
+    </div>
+</body>
+</html>
