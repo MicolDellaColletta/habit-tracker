@@ -1,39 +1,40 @@
-import sqlite3
+import os
+import psycopg2
+from psycopg2.extras import RealDictCursor
 from datetime import date, timedelta
 from werkzeug.security import generate_password_hash, check_password_hash
 
-DB_FILE = "habit_tracker.db"
+DATABASE_URL = os.environ.get("DATABASE_URL")
 
 def get_connection():
-    conn = sqlite3.connect(DB_FILE)
-    conn.row_factory = sqlite3.Row
+    conn = psycopg2.connect(DATABASE_URL, cursor_factory=RealDictCursor)
     return conn
 
 def init_db():
     conn = get_connection()
     cursor = conn.cursor()
-    cursor.executescript("""
+    cursor.execute("""
         CREATE TABLE IF NOT EXISTS users (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id SERIAL PRIMARY KEY,
             username TEXT NOT NULL UNIQUE,
             password TEXT NOT NULL,
             created_at TEXT NOT NULL
         );
-
+    """)
+    cursor.execute("""
         CREATE TABLE IF NOT EXISTS habits (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            user_id INTEGER NOT NULL,
+            id SERIAL PRIMARY KEY,
+            user_id INTEGER NOT NULL REFERENCES users(id),
             name TEXT NOT NULL,
             created_at TEXT NOT NULL,
-            FOREIGN KEY (user_id) REFERENCES users(id),
             UNIQUE(user_id, name)
         );
-
+    """)
+    cursor.execute("""
         CREATE TABLE IF NOT EXISTS completions (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            habit_id INTEGER NOT NULL,
+            id SERIAL PRIMARY KEY,
+            habit_id INTEGER NOT NULL REFERENCES habits(id),
             completed_on TEXT NOT NULL,
-            FOREIGN KEY (habit_id) REFERENCES habits(id),
             UNIQUE(habit_id, completed_on)
         );
     """)
@@ -44,27 +45,32 @@ def init_db():
 
 def create_user(username, password):
     conn = get_connection()
+    cursor = conn.cursor()
     try:
-        conn.execute(
-            "INSERT INTO users (username, password, created_at) VALUES (?, ?, ?)",
+        cursor.execute(
+            "INSERT INTO users (username, password, created_at) VALUES (%s, %s, %s)",
             (username, generate_password_hash(password), date.today().isoformat())
         )
         conn.commit()
         return True
-    except sqlite3.IntegrityError:
+    except psycopg2.IntegrityError:
         return False
     finally:
         conn.close()
 
 def get_user_by_username(username):
     conn = get_connection()
-    user = conn.execute("SELECT * FROM users WHERE username = ?", (username,)).fetchone()
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM users WHERE username = %s", (username,))
+    user = cursor.fetchone()
     conn.close()
     return user
 
 def get_user_by_id(user_id):
     conn = get_connection()
-    user = conn.execute("SELECT * FROM users WHERE id = ?", (user_id,)).fetchone()
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM users WHERE id = %s", (user_id,))
+    user = cursor.fetchone()
     conn.close()
     return user
 
@@ -78,54 +84,60 @@ def verify_password(username, password):
 
 def get_all_habits(user_id):
     conn = get_connection()
-    habits = conn.execute(
-        "SELECT * FROM habits WHERE user_id = ? ORDER BY name",
+    cursor = conn.cursor()
+    cursor.execute(
+        "SELECT * FROM habits WHERE user_id = %s ORDER BY name",
         (user_id,)
-    ).fetchall()
+    )
+    habits = cursor.fetchall()
     conn.close()
     return habits
 
 def add_habit(user_id, name):
     conn = get_connection()
+    cursor = conn.cursor()
     try:
-        conn.execute(
-            "INSERT INTO habits (user_id, name, created_at) VALUES (?, ?, ?)",
+        cursor.execute(
+            "INSERT INTO habits (user_id, name, created_at) VALUES (%s, %s, %s)",
             (user_id, name, date.today().isoformat())
         )
         conn.commit()
         return True
-    except sqlite3.IntegrityError:
+    except psycopg2.IntegrityError:
         return False
     finally:
         conn.close()
 
 def delete_habit(habit_id, user_id):
     conn = get_connection()
-    conn.execute("DELETE FROM completions WHERE habit_id = ?", (habit_id,))
-    conn.execute("DELETE FROM habits WHERE id = ? AND user_id = ?", (habit_id, user_id))
+    cursor = conn.cursor()
+    cursor.execute("DELETE FROM completions WHERE habit_id = %s", (habit_id,))
+    cursor.execute("DELETE FROM habits WHERE id = %s AND user_id = %s", (habit_id, user_id))
     conn.commit()
     conn.close()
 
 def mark_complete(habit_id):
     conn = get_connection()
+    cursor = conn.cursor()
     today = date.today().isoformat()
     try:
-        conn.execute(
-            "INSERT INTO completions (habit_id, completed_on) VALUES (?, ?)",
+        cursor.execute(
+            "INSERT INTO completions (habit_id, completed_on) VALUES (%s, %s)",
             (habit_id, today)
         )
         conn.commit()
         return True
-    except sqlite3.IntegrityError:
+    except psycopg2.IntegrityError:
         return False
     finally:
         conn.close()
 
 def unmark_complete(habit_id):
     conn = get_connection()
+    cursor = conn.cursor()
     today = date.today().isoformat()
-    conn.execute(
-        "DELETE FROM completions WHERE habit_id = ? AND completed_on = ?",
+    cursor.execute(
+        "DELETE FROM completions WHERE habit_id = %s AND completed_on = %s",
         (habit_id, today)
     )
     conn.commit()
@@ -133,10 +145,12 @@ def unmark_complete(habit_id):
 
 def get_completions(habit_id):
     conn = get_connection()
-    rows = conn.execute(
-        "SELECT completed_on FROM completions WHERE habit_id = ?",
+    cursor = conn.cursor()
+    cursor.execute(
+        "SELECT completed_on FROM completions WHERE habit_id = %s",
         (habit_id,)
-    ).fetchall()
+    )
+    rows = cursor.fetchall()
     conn.close()
     return [row["completed_on"] for row in rows]
 
