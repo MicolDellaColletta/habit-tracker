@@ -9,6 +9,9 @@ app = Flask(__name__)
 import os
 app.secret_key = os.environ.get("SECRET_KEY", "fallback-secret-key")
 
+with app.app_context():
+    init_db()
+
 def login_required(f):
     @wraps(f)
     def decorated(*args, **kwargs):
