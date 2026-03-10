@@ -216,6 +216,10 @@
 </head>
 <body>
 <div class="container">
+    <form class="add-form" action="/add" method="POST">
+        <input type="text" name="name" placeholder="Add a new habit..." autocomplete="off" />
+        <button type="submit">+ Add</button>
+    </form>
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
         <h1>🌸 Habit Tracker</h1>
         <form action="/logout" method="GET">
